@@ -2,73 +2,111 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
-import requests
 
-# Function to fetch news articles
-def fetch_news(stock_symbol):
-    api_key = st.secrets.get("news_api_key")  # Access the secret here
-    if not api_key:
-        st.error("News API key is missing!")
-        return []
-    
-    url = f'https://newsapi.org/v2/everything?q={stock_symbol}&apiKey={api_key}'
-    response = requests.get(url)
-    if response.status_code == 200:
-        articles = response.json().get('articles', [])
-        return articles[:5]  # Limit to the top 5 articles
-    else:
-        st.error("Failed to fetch news articles.")
-        return []
+# Function to fetch stock data
+def fetch_stock_data(tickers, period):
+    stock_data = {}
+    for ticker in tickers:
+        data = yf.download(ticker + '.NS', period=period, interval='1d')
+        data.reset_index(inplace=True)
+        stock_data[ticker] = data
+    return stock_data
+
+# Function to fetch latest stock prices
+def fetch_latest_prices(tickers):
+    latest_prices = {}
+    for ticker in tickers:
+        stock = yf.Ticker(ticker + '.NS')
+        latest_prices[ticker] = stock.history(period='1d')['Close'].iloc[-1]
+    return latest_prices
 
 # Function to calculate moving averages
-def calculate_moving_averages(data):
-    data['Daily_MA'] = data['Close'].rolling(window=1).mean()
-    data['Weekly_MA'] = data['Close'].rolling(window=5).mean()
-    data['Monthly_MA'] = data['Close'].rolling(window=20).mean()
-    data['Quarterly_MA'] = data['Close'].rolling(window=60).mean()
-    data['Semiannual_MA'] = data['Close'].rolling(window=126).mean()
-    data['Annual_MA'] = data['Close'].rolling(window=252).mean()
-    return data
+def calculate_moving_averages(stock_data):
+    for ticker in stock_data:
+        stock_data[ticker]['50_MA'] = stock_data[ticker]['Close'].rolling(window=50).mean()
+        stock_data[ticker]['200_MA'] = stock_data[ticker]['Close'].rolling(window=200).mean()
 
-# Streamlit app
-st.title("Stock Market Dashboard")
-
-# Real-Time Stock Price Updates
-stock_symbol = st.text_input("Enter stock symbol:")
-if stock_symbol:
-    try:
-        stock_data = yf.Ticker(stock_symbol)
-        # Display stock data
-        st.write(stock_data.history(period="1d"))
-
-        # Stock Performance Graphs
-        data = stock_data.history(period="2y")  # Fetch 2 years of data for moving averages
-        data = calculate_moving_averages(data)
-
-        plt.figure(figsize=(12, 6))
-        plt.plot(data.index, data['Close'], label='Closing Price', color='blue')
-        plt.plot(data['Daily_MA'], label='Daily MA', linestyle='--', color='orange')
-        plt.plot(data['Weekly_MA'], label='Weekly MA', linestyle='--', color='green')
-        plt.plot(data['Monthly_MA'], label='Monthly MA', linestyle='--', color='purple')
-        plt.plot(data['Quarterly_MA'], label='Quarterly MA', linestyle='--', color='red')
-        plt.plot(data['Semiannual_MA'], label='Semiannual MA', linestyle='--', color='brown')
-        plt.plot(data['Annual_MA'], label='Annual MA', linestyle='--', color='pink')
-
-        plt.title(f"{stock_symbol} Performance Over Last 2 Years")
-        plt.xlabel("Date")
-        plt.ylabel("Price")
-        plt.legend()
-        st.pyplot(plt)
-
-        # Fetch and display news articles
-        articles = fetch_news(stock_symbol)
-        if articles:
-            st.write(f"Latest news articles for {stock_symbol}:")
-            for article in articles:
-                st.write(f"**Title:** {article['title']}")
-                st.write(f"**Description:** {article['description']}")
-                st.write(f"[Read more]({article['url']})")
+# Function to plot stock data for comparative analysis
+def plot_comparative_stock_data(stock_data, tickers, timeframe):
+    plt.figure(figsize=(12, 6))
+    for ticker in tickers:
+        if timeframe == 'Daily':
+            plt.plot(stock_data[ticker]['Date'], stock_data[ticker]['Close'], label=f'{ticker} Close Price (INR)')
         else:
-            st.write("No articles found.")
-    except Exception as e:
-        st.error(f"Error fetching data for {stock_symbol}: {e}")
+            # Resample the data for weekly or monthly averages
+            resampled_data = stock_data[ticker].set_index('Date').resample(timeframe[0]).mean().reset_index()
+            plt.plot(resampled_data['Date'], resampled_data['Close'], label=f'{ticker} {timeframe} Close Price (INR)')
+
+    plt.title(f'Comparative Stock Prices ({timeframe})')
+    plt.xlabel('Date')
+    plt.ylabel('Price (in ₹)')
+    plt.legend()
+    plt.grid()
+    st.pyplot(plt)
+
+# Streamlit App
+st.title('Real-Time Stock Market Dashboard (INR)')
+
+# User input for stock tickers
+tickers = st.text_input("Enter Stock Tickers (comma-separated, e.g., RELIANCE, TCS):", "RELIANCE, TCS")
+tickers = [ticker.strip() for ticker in tickers.split(',')]
+
+# Timeframe selection
+timeframe = st.selectbox("Select Timeframe:", ["Daily", "Weekly", "Monthly"])
+
+if tickers:
+    # Determine the period based on the selected timeframe
+    if timeframe == "Daily":
+        period = '1y'  # 1 year for daily
+    elif timeframe == "Weekly":
+        period = '5y'  # 5 years for weekly
+    else:  # Monthly
+        period = '5y'  # 5 years for monthly
+
+    # Fetch stock data
+    stock_data = fetch_stock_data(tickers, period)
+
+    # Fetch latest stock prices
+    latest_prices = fetch_latest_prices(tickers)
+    st.subheader('Latest Stock Prices (INR)')
+    for ticker, price in latest_prices.items():
+        st.write(f"{ticker}: ₹{price:.2f}")
+
+    # Calculate Moving Averages
+    calculate_moving_averages(stock_data)
+
+    # Display data and plot
+    for ticker in tickers:
+        st.subheader(f'{ticker} Stock Data (INR)')
+        st.write(stock_data[ticker].tail())
+    
+    # Plot comparative stock data
+    plot_comparative_stock_data(stock_data, tickers, timeframe)
+
+    # Comparative Analysis: Displaying latest prices and moving averages in a table
+    comparison_data = {
+        "Ticker": [],
+        "Latest Price (INR)": [],
+        "50-Day MA (INR)": [],
+        "200-Day MA (INR)": [],
+    }
+
+    for ticker in tickers:
+        comparison_data["Ticker"].append(ticker)
+        comparison_data["Latest Price (INR)"].append(f"₹{latest_prices[ticker]:.2f}")
+        comparison_data["50-Day MA (INR)"].append(f"₹{stock_data[ticker]['50_MA'].iloc[-1]:.2f}" if not stock_data[ticker]['50_MA'].isna().all() else "N/A")
+        comparison_data["200-Day MA (INR)"].append(f"₹{stock_data[ticker]['200_MA'].iloc[-1]:.2f}" if not stock_data[ticker]['200_MA'].isna().all() else "N/A")
+
+    comparison_df = pd.DataFrame(comparison_data)
+    st.subheader('Comparative Analysis of Stocks')
+    st.write(comparison_df)
+
+    # Downloadable reports
+    for ticker in tickers:
+        csv = stock_data[ticker].to_csv(index=False)
+        st.download_button(
+            label=f"Download {ticker} CSV",
+            data=csv,
+            file_name=f"{ticker}_stock_data.csv",
+            mime="text/csv",
+        )
