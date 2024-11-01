@@ -48,4 +48,27 @@ if stock_symbol:
         plt.figure(figsize=(12, 6))
         plt.plot(data.index, data['Close'], label='Closing Price', color='blue')
         plt.plot(data['Daily_MA'], label='Daily MA', linestyle='--', color='orange')
-        p
+        plt.plot(data['Weekly_MA'], label='Weekly MA', linestyle='--', color='green')
+        plt.plot(data['Monthly_MA'], label='Monthly MA', linestyle='--', color='purple')
+        plt.plot(data['Quarterly_MA'], label='Quarterly MA', linestyle='--', color='red')
+        plt.plot(data['Semiannual_MA'], label='Semiannual MA', linestyle='--', color='brown')
+        plt.plot(data['Annual_MA'], label='Annual MA', linestyle='--', color='pink')
+
+        plt.title(f"{stock_symbol} Performance Over Last 2 Years")
+        plt.xlabel("Date")
+        plt.ylabel("Price")
+        plt.legend()
+        st.pyplot(plt)
+
+        # Fetch and display news articles
+        articles = fetch_news(stock_symbol)
+        if articles:
+            st.write(f"Latest news articles for {stock_symbol}:")
+            for article in articles:
+                st.write(f"**Title:** {article['title']}")
+                st.write(f"**Description:** {article['description']}")
+                st.write(f"[Read more]({article['url']})")
+        else:
+            st.write("No articles found.")
+    except Exception as e:
+        st.error(f"Error fetching data for {stock_symbol}: {e}")
