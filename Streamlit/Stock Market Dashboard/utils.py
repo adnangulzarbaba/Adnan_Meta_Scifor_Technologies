@@ -1,10 +1,9 @@
 import requests
 import pandas as pd
-from textblob import TextBlob
 
 # Function to fetch news articles
 def fetch_news(stock_symbol):
-    api_key = os.getenv('NEWS_API_KEY')  # Use environment variable for API key
+    api_key = st.secrets["news_api_key"]  # Access the secret here
     url = f'https://newsapi.org/v2/everything?q={stock_symbol}&apiKey={api_key}'
     response = requests.get(url)
     if response.status_code == 200:
@@ -12,15 +11,6 @@ def fetch_news(stock_symbol):
         return articles
     else:
         return []
-
-# Function to analyze sentiment of articles
-def analyze_sentiment(articles):
-    sentiment_scores = []
-    for article in articles:
-        content = article['description'] if article['description'] else ''
-        analysis = TextBlob(content)
-        sentiment_scores.append(analysis.sentiment.polarity)  # Range: -1 (negative) to 1 (positive)
-    return sentiment_scores
 
 # Function to calculate moving averages
 def calculate_moving_averages(data):
