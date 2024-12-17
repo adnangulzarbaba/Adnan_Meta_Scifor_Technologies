@@ -5,18 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Convo Bot</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Include Font Awesome for Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h1>Convo Bot</h1>
-        <h3>Select Mode:</h3>
+        <h1>Convo Bot <i class="fas fa-volume-up"></i></h1> <!-- Speaker icon instead of chat bubbles -->
         <form id="chatForm">
             <textarea id="user_input" placeholder="Type your message..."></textarea>
-            <button type="button" onclick="sendMessage()">Send Message (Chat Mode)</button>
+            <div class="button-container">
+                <button type="button" class="send-btn" onclick="sendMessage()">Send</button>
+                <!-- Mic Icon button -->
+                <button type="button" class="audio-btn" onclick="startVoice">
+                    <i class="fas fa-microphone"></i> <!-- Mic icon -->
+                </button>
+            </div>
         </form>
-        <div>
-            <button onclick="startVoice()">Start Voice Mode</button>
-        </div>
         <div id="response"></div>
     </div>
 
@@ -25,9 +29,7 @@
             const userInput = document.getElementById('user_input').value;
             fetch("/", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ user_input: userInput })
             })
             .then(response => response.json())
@@ -38,9 +40,7 @@
         }
 
         function startVoice() {
-            fetch("/voice", {
-                method: "POST"
-            })
+            fetch("/voice", { method: "POST" })
             .then(response => response.json())
             .then(data => {
                 document.getElementById("response").innerText = data.response;
