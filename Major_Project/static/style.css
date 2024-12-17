@@ -1,31 +1,82 @@
 body {
     font-family: Arial, sans-serif;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: center; /* Centers the container horizontally */
+    align-items: flex-end;   /* Aligns the container to the bottom */
     height: 100vh;
-    background-color: #f4f4f9;
+    background-color: #222;
     margin: 0;
 }
 
 .container {
     text-align: center;
     width: 50%;
+    color: #fff;
+    margin-bottom: 20px; /* Add space between the container and bottom */
 }
 
 textarea {
     width: 80%;
     height: 100px;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 16px;
+    background-color: #333;
+    color: #fff;
+    border: 2px solid #5a4dff;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: #9e50ff;
+}
+
+/* Header Styling */
+h1 {
+    font-size: 3rem;
+    color: #e387ff; /* Light purple */
+    margin-bottom: 10px;
+    text-shadow: 0px 0px 10px #9e50ff; /* Soft purple glow */
+    display: inline-flex;
+    align-items: center; /* Align icon with text */
+    gap: 10px; /* Space between text and icon */
+}
+
+h1 i {
+    font-size: 2rem; /* Adjust icon size */
+    color: #e387ff; /* Match the icon color to the header text */
+}
+
+/* Button Container */
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
 }
 
 button {
-    padding: 10px 20px;
+    padding: 12px 20px;
     font-size: 16px;
-    margin-top: 10px;
+    border-radius: 8px;
+    background-color: #5a4dff;
+    color: white;
+    border: none;
+    cursor: pointer;
 }
 
+button:hover {
+    background-color: #9e50ff;
+}
+
+/* Response Area Styling */
 #response {
     margin-top: 20px;
     font-size: 18px;
-    color: #333;
+    color: #e387ff;
+}
+
+/* Button Styling for Mic */
+.audio-btn i {
+    font-size: 20px;
 }
