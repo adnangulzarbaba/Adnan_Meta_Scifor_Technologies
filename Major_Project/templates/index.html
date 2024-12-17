@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convo Bot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Convo Bot</h1>
+        <h3>Select Mode:</h3>
+        <form id="chatForm">
+            <textarea id="user_input" placeholder="Type your message..."></textarea>
+            <button type="button" onclick="sendMessage()">Send Message (Chat Mode)</button>
+        </form>
+        <div>
+            <button onclick="startVoice()">Start Voice Mode</button>
+        </div>
+        <div id="response"></div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            const userInput = document.getElementById('user_input').value;
+            fetch("/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ user_input: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("response").innerText = data.response;
+                speakResponse(data.response);
+            });
+        }
+
+        function startVoice() {
+            fetch("/voice", {
+                method: "POST"
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("response").innerText = data.response;
+                speakResponse(data.response);
+            });
+        }
+
+        function speakResponse(text) {
+            const msg = new SpeechSynthesisUtterance(text);
+            window.speechSynthesis.speak(msg);
+        }
+    </script>
+</body>
+</html>
